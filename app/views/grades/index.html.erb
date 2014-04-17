@@ -1,0 +1,266 @@
+<%= javascript_include_tag "grade.js" %>
+<%= javascript_include_tag "jquery_tablesorter.js" %>
+<script>
+  var changed_grades = {}
+  var grades;
+  $(document).ready(function() {
+    // call the tablesorter plugin
+    $(".sortable").tablesorter({
+      // define a custom text extraction function
+        sortList: [[2,0],[0,0],[1,0]],
+        textExtraction: function(node) {
+        // extract data from markup and return it
+        if ($(node).find("input").length > 0) return $(node).find("input").val();
+        return $(node).text();
+      }
+    });
+
+      // bind double click event for changing visibility of a grade
+    $(".grade input[type='text']").dblclick(function(event){
+        $(this).toggleClass("draft");
+        $(this).trigger("change");
+    })
+     // Calculate initial Earned Grades
+    $("tr[id^='s_']").each(function(){
+      var student_id = $(this).attr("id").replace("s_","");
+      grades.earned_grade(student_id);
+//      grades.updateFinalGrade(student_id);
+    });
+
+     // Leave Warning
+    $(window).bind("beforeunload", function(){
+        if(Object.keys(changed_grades).length > 0 ){
+            return 'You have some unsaved changes in this page.';
+        }
+    });
+
+    // warning messages
+    $("div#gradebook_indicator").hide();
+
+    //  change grades
+    $(".grade input[type='text']").change(function(){
+        var grade_attrs = parse_id($(this).attr('id'));
+        var previousValue = this.defaultValue;
+        if(this.defaultValue!=$(this).val()){
+            $(this).addClass("draft");
+        }
+        $(this).val($.trim($(this).val()));
+        var score = $(this).val();
+        /*if(!validate_grade(score)){
+              alert('Unrecognized input');
+              $(this).val(previousValue) ;
+              $(this).focus();
+             return;
+        } */
+
+        var visible = !$(this).hasClass("draft");
+        var previousVisible = !$(this).hasClass("default_draft");
+        grades.earned_grade(grade_attrs.student_id);
+//    grades.updateFinalGrade(grade_attrs.student_id);
+        if(previousValue != score || visible != previousVisible)
+        {
+            $(this).parents("td").addClass("changedScore");
+            changed_grades[grade_attrs.assignment_id+"_"+grade_attrs.student_id] = {
+                course_id: grade_attrs.course_id,
+                assignment_id: grade_attrs.assignment_id,
+                student_id: grade_attrs.student_id,
+                score: score,
+                is_student_visible: visible
+            };
+        }
+        else{
+            $(this).parents("td").removeClass("changedScore");
+            delete changed_grades[grade_attrs.assignment_id+"_"+grade_attrs.student_id];
+        }
+
+        if(Object.keys(changed_grades).length > 0 ) {
+          $("button#gradebook_submit").removeAttr("disabled");
+          $("div#gradebook_indicator").show();
+          $("button#gradebook_post_draft").attr("disabled", "disabled");
+          $("button#gradebook_post_final").attr("disabled", "disabled");
+        }
+        else {
+          $("button#gradebook_submit").attr("disabled", "disabled");
+          $("div#gradebook_indicator").hide();
+          $("button#gradebook_post_draft").removeAttr("disable");
+          $("button#gradebook_post_final").removeAttr("disable");
+        }
+    });
+
+  });
+  function validate_grade(score){
+      if(score == "")  return true;
+      if(score.match(/^\d*\.{0,1}\d+$/)) return true;
+      validate_grades = ["A", "A-","B+","B", "B-", "C+", "C", "C-","R","W","I"];
+      if($.inArray(score.toUpperCase(), validate_grades) >=0 ) return true;
+      console.log("false");
+      return false;
+  }
+  function parse_id(idAttr){
+      var course_id = parseInt(idAttr.split("_")[0]);
+      var assignment_id = idAttr.split("_")[1];
+      var student_id = parseInt(idAttr.split("_")[2]);
+
+      if (assignment_id == "final")
+        assignment_id = -1;
+      else
+        assignment_id = parseInt(assignment_id);
+      return {"course_id": course_id, "assignment_id": assignment_id, "student_id": student_id};
+  }
+
+  function post_drafted_and_send() {
+    if (!confirm("Do you want to finalize draft grades and send to students?")) return;
+    if (document.getElementById("send_copy_to_myself").checked = true)
+        post_grades('<%=post_drafted_and_send_path(@course, :send_copy_to_myself => 1)%>');
+    else
+        post_grades('<%=post_drafted_and_send_path(@course, :send_copy_to_myself => 0)%>');
+  }
+
+  function send_final_grade() {
+    if (!confirm("Do you want to send all final letter grades (including draft grades) to students?")) return;
+    if (document.getElementById("send_copy_to_myself").checked == true)
+        post_grades('<%=send_final_grade_path(@course, :send_copy_to_myself => 1)%>');
+    else
+        post_grades('<%=send_final_grade_path(@course, :send_copy_to_myself => 0)%>');
+  }
+
+  function save() {
+      post_grades('<%=save_path(@course)%>');
+  }
+  function post_grades(url) {
+      var data = {};
+      data.grades = Object.keys(changed_grades).map(function(key){return changed_grades[key];});
+      $("#loading").show();
+      $.ajax({
+          contentType: "application/json;",
+          url: url,
+          data: JSON.stringify(data, null, 1),
+          dataType: "json",
+          //beforeSend is needed for devise 1.4.5 and rails 3.0.9
+          //http://stackoverflow.com/questions/7393871/devise-not-setting-current-user-on-ajax-post-even-though-correct-x-csrf-token-is
+          beforeSend: function(jqXHR, settings) {
+              jqXHR.setRequestHeader('X-CSRF-Token', $('meta[name="csrf-token"]').attr('content'));
+          },
+          success:function(data){
+              if(data["message"] == "true"){
+                  location.reload(false);
+              }
+              changed_grades = {};
+          },
+          error: function(jqXHR, textStatus, errorThrown){
+              console.log("Unable to submit the record");
+              //changed_grades = {};
+          }
+
+      })
+    }
+  </script>
+  <h1><%= link_to @course.display_for_course_page, course_path(@course), :class => "course" %></h1>
+  <%=  render :partial=>"layouts/grade_book_sub_menu" %>
+
+  <div id="result"></div>
+  <div style="width:100%;">
+    <table id="legend">
+     <tr>
+        <td>
+          <input style="width:10px;height:10px;border:0px;" size="1" type="'text" class="draft" >
+          Draft
+        </td>
+        <td><input class="changedScore" style="width:10px;height:10px;" size="1" type="'text" /> Unsaved changes</td>
+        <td><%=image_tag("doubleclick.png", :size=>"25x25",:style=>"vertical-align:middle;")%> Double click to toggle draft</td>
+      </tr>
+    </table>
+  </div>
+
+<div>
+  <div class="score">
+    <input type="hidden" id="course_id" value=<%=@course.id%> />
+
+    <table class="cmu_table sortable" id="grade_table">
+      <thead>
+        <tr>
+          <th> First Name</th>
+          <th> Last Name </th>
+          <th> Team </th>
+          <% @assignments.each do |assignment| %>
+            <th class="assignment_grade" title="<%=assignment.name%>">
+              <% unless assignment.short_name.blank? %>
+                  <%= assignment.short_name %>
+              <% else %>
+                  <%= assignment.name %>
+              <% end %>
+                  <br/>
+              <span style="font-weight: normal;white-space: nowrap;">(
+              <% case GradingRule.get_grade_type @course.id %>
+              <%when "points" %>
+                  Max <%="#{assignment.maximum_score}"%>
+              <%else%>
+                  Weight <%="#{assignment.maximum_score}"%>
+              %<%end%>
+              )</span>
+            </th>
+          <%end %>
+          <th style="white-space: nowrap;">Earned Grades<br/>(Performance)</th>
+          <th style="white-space: nowrap;">Earned <br/> Letter Grades</th>
+          <th style="white-space: nowrap;">Final <br/> Letter Grades</th>
+        </tr>
+      </thead>
+      <tbody>
+        <%= render :partial => "grade_spreadsheet", :locals => {:hide_draft_grades => false, :assignments => @assignments, :course => @course, :grades => @grades, :team_assignment => @team_assignment} %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="tw-bs">
+
+    <div class="alert alert-danger" id="gradebook_indicator" style="margin-top:15px;">Please save changes</div>
+    <!-- Save changes -->
+    <div class="row" style="margin-top:20px;">
+      <div class="col-md-12">
+        <button type="button" id="gradebook_submit" onclick="save()" disabled="disabled" class="btn btn-default">Save changes</button>
+        <%= link_to image_tag("ajax-loader.gif", :class => "loading", :alt => "Loading", :hidden => true, :id => "loading") %>
+      </div>
+    </div>
+
+    <hr>
+    <!-- Finalize and Email + Notify Final Grades -->
+    <div class="row">
+      <div class="col-md-12" style="padding-bottom:10px;">
+        <input type="checkbox" id="send_copy_to_myself" value="0"> Send a copy to myself
+      </div>
+      <div class="col-md-4">
+        <button type="button" id="gradebook_post_draft" onclick="post_drafted_and_send();" class="btn btn-primary">Finalize and Email Students</button>
+      </div>
+      <div class="col-md-3 col-md-offset-5">
+        <button type="button" id="gradebook_post_final" onclick="send_final_grade();" class="btn btn-danger">Notify Final Grades</button>
+      </div>
+
+    </div>
+
+    <hr>
+
+    <div class="row">
+      <div class="col-md-12">
+        <div class="well">
+          <h3 style="margin-top:0;">Import Grade Book</h3>
+          <%= form_for :import, :url=>{:controller=>"grades", :action=>"import"}, :html => { :multipart => true } do |f| %>
+              <%= f.file_field :spreadsheet -%> <br/>
+              <%= submit_tag 'Import', class: "btn btn-default" %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12">
+        <div class="well">
+          <h3 style="margin-top:0;">Export Grade Book</h3>
+          <%= form_for :export, :url=>{:controller=>"grades", :action=>"export"} do |f| %>
+              <%= submit_tag 'Export', class: "btn btn-default" %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+</div>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="Content-Type"/>
+</head>
+
+<body>
+You've been added to the job <%= @job.title %>.<br/><br/>
+The project supervisors are: <% @job.supervisors.each { |user| %> <%= mail_to user.email %>, <% } %> <br/>
+<br/>
+Before you can begin your GA position, you must complete the following forms and bring them to <a href="http://whiteboard.sv.cmu.edu/people/SylviaArifin">Sylvia Arifin</a><br/>
+Once the paperwork is completed, then you can start the project.<br/><br/>
+
+Please download <a href="https://www.dropbox.com/s/lqb2nuaknwb8yu7/ga_job_forms.zip">these forms</a>, fill them out, and print them:<br/>
+- California withholding allowance<br/>
+- Direct deposit authorization (please attach a voided check)<br/>
+- Emergency Contact Information<br/>
+- IP Policy agreement form<br/>
+- Worker's Compensation Acknowledgment <br/>
+- Worker's Compensation Information Signature <br/>
+Please download <a href="http://www.irs.gov/file_source/pub/irs-pdf/fw4.pdf">W-4 Tax withholding allowance</a>, fill it out, and print it.  (note: foreign nationals should contact Sylvia for specific instructions) <br/>
+<br/>
+<br/>
+If you do not already have a Social Security Number, please contact <%= mail_to "Gerry.Elizondo@sv.cmu.edu", "Gerry.Elizondo@sv.cmu.edu", :subject => "Help getting SSN for GA Job" %> to begin the process.<br/>
+It usually takes 2 - 3 weeks. You cannot get paid until you have a SSN.<br/>
+<br/>
+Once the forms are completed, you should bring them to <a href="http://whiteboard.sv.cmu.edu/people/SylviaArifin">Sylvia Arifin</a>. When you meet with Sylvia, bring your "Official ID."  Examples include: Passport, green card, or US driver's license and Social Security card.<br/> 
+F-1 students must show: Passport, visa sticker, I-94, and I-20.<br/>
+<br/>
+<br/>
+<p>Patrolling the campus,</p>
+<p>Scotty Dog</p>
+<br/>
+<%= image_tag("http://whiteboard.sv.cmu.edu/images/ScottyDogLandscape.jpg", :class => "bevel", :size => "236x69", :alt => "Picture of Scotty Dog") %>
+</body>
+</html>

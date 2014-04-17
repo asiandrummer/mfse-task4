@@ -1,0 +1,25 @@
+<% content_for :title, "Listing pages" %>
+
+<h1>Listing pages</h1>
+
+<table class="cmu_table">
+  <tr>
+    <th>Title</th>
+    <th>Course</th>
+  </tr>
+
+  <% for page in @pages %>
+      <tr class="<%= cycle('cmu_table_odd', 'cmu_table_even') %>">
+        <td><%= link_to page.title, page %></td>
+        <% unless page.course_id.blank? %>
+            <td>(<%= h page.course.name %>)</td>
+        <% else %>
+            <td>&nbsp;</td>
+        <% end %>
+      </tr>
+  <% end %>
+</table>
+
+<br/>
+
+<%= link_to 'New page', new_page_path %>

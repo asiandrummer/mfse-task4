@@ -1,0 +1,114 @@
+<div class="clearboth">
+    <h2>Editable by Admin:</h2>
+    <table class="cmu_table user_profile_content_admin_editable">
+        <% if !(current_user.is_admin?) %>
+        <tr>
+            <td><%= f.label :email, "CMU-SV email" %></td>
+            <td><%= f.text_field :email, :placeholder => "CMU-SV email address", :disabled => 'disabled' %></td>
+        </tr>
+        <tr>
+            <td><%= f.label :webiso_account, "Andrew email" %></td>
+            <td><%= f.text_field :webiso_account, :placeholder => "Webiso account", :disabled => 'disabled' %></td>
+        </tr>
+        <tr>
+            <td><%= f.label :twiki_name, "TWiki name" %></td>
+            <td><%= f.text_field :twiki_name, :placeholder => "TWiki name", :disabled => 'disabled' %></td>
+        </tr>
+        <tr>
+            <td><%= f.label "Display name" %></td>
+            <td><%= f.text_field :human_name, :placeholder => "Human name", :disabled => 'disabled' %></td>
+        </tr>
+        <tr>
+            <td><%= f.label "Expires at" %></td>
+            <td><%= f.text_field :expires_at, :placeholder => 'Date to be inactivated', :disabled => 'disabled' %></td>
+        </tr>
+
+        <% else %>
+        <tr>
+            <td><%= f.label :email, "CMU-SV email" %></td>
+            <td><%= f.text_field :email, :placeholder => "CMU-SV email address" %></td>
+        </tr>
+        <tr>
+            <td><%= f.label :webiso_account, "Andrew email" %></td>
+            <td><%= f.text_field :webiso_account, :placeholder => "Webiso account" %></td>
+        </tr>
+        <tr>
+            <td><%= f.label :twiki_name, "TWiki name" %></td>
+            <td><%= f.text_field :twiki_name, :placeholder => "TWiki name" %></td>
+        </tr>
+        <tr>
+            <td><%= f.label "Display name" %></td>
+            <td><%= f.text_field :human_name, :placeholder => "Human name" %></td>
+        </tr>
+        <tr>
+            <td><%= f.label "Expires at" %></td>
+            <td><%= f.text_field :expires_at, :placeholder => 'Date to be inactivated' %></td>
+        </tr>
+        <% end %>
+    </table>
+</div>
+
+<div class="clearboth">
+    <table class="cmu_table user_profile_content_admin_editable">
+        <% if !(current_user.is_admin?) %>
+        <tr>
+            <td><%= f.label :is_student %></td>
+            <td><%= f.check_box :is_student , :disabled => 'disabled' %></td>
+        </tr>
+        <tr>
+            <td><%= f.label :is_alumnus %></td>
+            <td><%= f.check_box :is_alumnus , :disabled => 'disabled' %></td>
+        </tr>
+        <tr>
+            <td><%= f.label :is_staff %></td>
+            <td><%= f.check_box :is_staff , :disabled => 'disabled' %></td>
+        </tr>
+        <tr>
+            <td><%= f.label :is_active %></td>
+            <td><%= f.check_box :is_active , :disabled => 'disabled' %></td>
+        </tr>
+        <tr>
+            <td><%= f.label :is_admin %></td>
+            <td><%= f.check_box :is_admin , :disabled => 'disabled' %> <span class="help_text">(Admin accounts can only be granted through SQL)</span></td>
+        </tr>
+        <tr>
+            <td><%= f.label :is_adobe_connect_host, "Is adobe host" %></td>
+            <td><%= f.check_box :is_adobe_connect_host, :disabled => 'disabled' %></td>
+        </tr>
+
+
+        <% else %>
+        <tr>
+            <td><%= f.label :is_student %></td>
+            <td><%= f.check_box :is_student %></td>
+        </tr>
+        <tr>
+            <td><%= f.label :is_alumnus %></td>
+            <td><%= f.check_box :is_alumnus %></td>
+        </tr>
+        <tr>
+            <td><%= f.label :is_staff %></td>
+            <td><%= f.check_box :is_staff %></td>
+        </tr>
+        <tr>
+            <td><%= f.label :is_active %></td>
+            <td><%= f.check_box :is_active %></td>
+        </tr>
+        <tr>
+            <td><%= f.label :is_admin %></td>
+            <td><%= f.check_box :is_admin %> <span class="help_text">(Admin accounts can only be granted through SQL)</span></td>
+        </tr>
+        <tr>
+            <td><%= f.label :is_adobe_connect_host, "Is adobe host" %></td>
+            <td><%= f.check_box :is_adobe_connect_host %></td>
+        </tr>
+        <tr>
+            <td><%= f.label :is_ga_promised, "Promised a GA?" %></td>
+            <td><%= f.check_box :is_ga_promised %></td>
+        </tr>
+
+        <% end %>
+
+    </table>
+</div>
+

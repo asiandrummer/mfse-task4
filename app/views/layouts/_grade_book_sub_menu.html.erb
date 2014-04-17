@@ -1,0 +1,8 @@
+<div>
+  <%= link_to "Configure Course", configure_course_path(@course)%> |
+  <%= link_to "Manage #{nomenclature_assignment_or_deliverable}s", course_assignments_path(@course)%> |
+  <%= link_to "Grading #{nomenclature_assignment_or_deliverable}s", course_deliverables_path(@course)%> |
+  <!-- <%= link_to "Pending List", course_deliverables_path(@course)%> | --> 
+  <%= link_to "Grade Book", course_grades_path(@course)%>
+</div>
+<br/>

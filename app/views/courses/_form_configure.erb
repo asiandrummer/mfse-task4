@@ -1,0 +1,181 @@
+<% content_for :javascript do %>
+    <script type="text/javascript" xmlns="http://www.w3.org/1999/html">
+        $(document).ready(function () {
+            $('#course_configure_peer_evaluation').change(function () {
+                if ($(this).is(':checked')) {
+                    $('#course_peer_evaluation_first_email').val("<%= @course.auto_generated_peer_evaluation_date_start.to_s %>").datepicker( "option", "disabled", false);
+                    $('#course_peer_evaluation_second_email').val("<%= @course.auto_generated_peer_evaluation_date_end.to_s %>").datepicker( "option", "disabled", false);
+                }
+                else {
+                    $('#course_peer_evaluation_first_email').val("").datepicker( "option", "disabled", true);
+                    $('#course_peer_evaluation_second_email').val("").datepicker( "option", "disabled", true);
+                }
+            });
+
+            $("#course_peer_evaluation_first_email").datepicker({
+              showButtonPanel: true,
+              disabled: <%= @course.peer_evaluation_first_email.blank? %>,
+              dateFormat: 'yy-mm-dd'
+            });
+            $("#course_peer_evaluation_second_email").datepicker({
+              showButtonPanel: true,
+              disabled: <%= @course.peer_evaluation_second_email.blank? %>,
+              dateFormat: 'yy-mm-dd'
+            });
+
+
+            $(".letter").change(function(){
+                var error = "";
+                $(".letter").each(function(){
+                    var max = $(this).parents("tr").prev("tr").find(".letter").val();
+                    var min = $(this).parents("tr").next("tr").find(".letter").val();
+                    if(max!=undefined && $(this).val() >= max){
+                        error = "The grading criteria should be in decending order.";
+                    }
+                    if($(this).val() <= min){
+                        error = "The grading criteria should be in decending order.";
+                    }
+                });
+                if(error !=""){
+                    $("#decending-error").text(error);
+                    $("#decending-error").show();
+                    $("#course_submit").attr("disabled", true);
+                    $(this).focus();
+
+                }
+                else{
+                    $("#decending-error").hide();
+                    $("#course_submit").attr("disabled", false);
+                }
+
+
+            });
+
+        });
+    </script>
+
+<% end %>
+<style>
+#decending-error{
+border: 1px solid;
+padding: 5px 5px 5px 5px;
+background-position: 10px center;
+color: #D8000C;
+background-color: #FFBABA;
+}
+</style>
+<div class="rounded staff">
+  <%= image_tag("professor.jpg", :size => "50x50", :border => "0", :alt => "Only faculty can see this information", :title => "Faculty Role") %>
+  <span class="instructions">Only faculty can see this information.</span>
+
+
+  <% unless @course.configured_by_user_id.blank? %>
+      <p>This information was configured last by <%= @course.configured_by.human_name %></p>
+  <% end %>
+
+  <%= form_for(@course) do |f| %>
+      <% if @course.errors.any? %>
+          <div id="error_explanation">
+            <h2><%= pluralize(@course.errors.count, "error") %> prohibited this course from being saved:</h2>
+
+            <ul>
+              <% @course.errors.full_messages.each do |msg| %>
+                  <li><%= msg %></li>
+              <% end %>
+            </ul>
+          </div>
+      <% end %>
+      <h2>Common Tools</h2>
+      <p>
+        <input type="checkbox" disabled="true" checked="checked">
+        We use a variety of systems to host our curriculum including
+
+      <div class="checkboxed_form">
+        <ul>
+          <li>whiteboard (http://whiteboard.sv.cmu.edu),</li>
+          <li>blackboard (http://www.cmu.edu/blackboard),</li>
+          <li>the twiki (http://info.sv.cmu.edu),</li>
+          <li>or your own web site.</li>
+        </ul>
+      </div>
+      </p>
+      <p>
+        <%= f.label :curriculum_url, "I plan on putting my curriculum materials at this url:", :class => "checkboxed_form" %>
+        <br/>
+        <%= f.text_field :curriculum_url, :size => 100, :class => "checkboxed_form" %><br/>
+        <div class="checkboxed_form"><p id="course_curriculum_url_notice" style="color: green"></p></div>
+      </p>
+      <p class="checkboxed_form">
+        If you want a twiki web created for your course, then email help@sv.cmu.edu <%= @course.auto_generated_twiki_url %> is the suggested url.
+      </p>
+      <br/>
+      <p>
+        <input type="checkbox" disabled="true" checked="checked">
+        I want a class mailing list. The system will automatically create and update a class mailing list as HUB
+        registration data is imported and when you add members to a team in the class.
+      </p>
+      <h2>Additional Tools</h2>
+      <p>
+        <% if @course.peer_evaluation_first_email.blank? && @course.peer_evaluation_second_email.blank? %>
+          <input type="checkbox" id="course_configure_peer_evaluation">
+        <% else %>
+          <input type="checkbox" id="course_configure_peer_evaluation" checked="checked">
+        <% end %>
+        <%= f.label :configure_peer_evaluation, "I plan on using the Peer Evaluation Tool" %><br/>
+        <%= f.text_field :peer_evaluation_first_email, :size => 11, :class => "checkboxed_form" %> On this date, email
+        the teams telling them about the peer evaluation. <br/>
+        <%= f.text_field :peer_evaluation_second_email, :size => 11, :class => "checkboxed_form" %> Due Date (An email
+        reminder will be sent on this date)
+      </p>
+      <p>
+        <%= f.check_box(:remind_about_effort) %>
+        <%= f.label :remind_about_effort, "I will be using the Effort Logging Tool" %>
+        <br/>
+      </p>
+
+
+      <!--
+    <p>
+      <%= f.label :primary_faculty_label %><br/>
+      <%= f.text_field(:primary_faculty_label, :size => 40) %>
+    </p>
+    <p>
+      <%= f.label :secondary_faculty_label %><br/>
+      <%= f.text_field(:secondary_faculty_label, :size => 40) %>
+    </p>
+    -->
+    <h3>Grading Tool</h3>
+    <%= f.fields_for :grading_rule do |rule| %>
+      <p>
+      <%=rule.label :is_nomenclature_deliverable, "What nomenclature do you prefer: assignments or deliverables?" %> <br/>
+      <%=rule.select(:is_nomenclature_deliverable, [["Assignments", false], ["Deliverables in a task", true]]) %>
+      </p>
+      <p>
+      <%= rule.label :grade_type, "How does your syllabus determine grades?" %><br/>
+      <%= rule.select(:grade_type, [['Points (e.g. project is 150 points)', 'points'],['Weight or percentage (e.g. final is 50%) ','weights']])  %> <br/>
+      </p>
+      <br/>
+      Grading Criteria
+      <table>
+        <%[[:A_grade_min, "A", "94"],[:A_minus_grade_min, "A-", "90"],[:B_plus_grade_min, "B+", "88"], [:B_grade_min, "B", "84"],[:B_minus_grade_min, "B-", "80"],[:C_plus_grade_min, "C+", "78"], [:C_grade_min, "C", "74"],[:C_minus_grade_min, "C-", "70"]].each do |entry| %>
+          <tr>
+            <td>     <%= rule.label entry[0], entry[1]%><br/></td>
+            <td>     <%= rule.text_field(entry[0], :size => 5 , :class=>"letter", :placeholder=>entry[2],:type=>"number",:step=>".1",:min=>0 )%></td>
+          </tr>
+        <%end%>
+      </table>
+    <%end%>
+
+      </br></br>
+
+      <p>
+      <%= f.hidden_field :is_configured, :value => true %>
+
+      <%= f.submit button_name %>
+        <span  id="decending-error" style="display: none;"></span>
+      </p>
+
+    <% end %>
+
+  </div>
+

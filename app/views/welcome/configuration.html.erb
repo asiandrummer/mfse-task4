@@ -1,0 +1,41 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  <title></title>
+</head>
+<body>
+
+
+<div>Google Username: <%= GOOGLE_USERNAME %></div>
+<div>Google Domain: <%= GOOGLE_DOMAIN %></div>
+<br/>
+
+<div>TWiki Username: <%= TWIKI_USERNAME %></div>
+<div>TWiki Url: <%= TWIKI_URL %></div>
+<br/>
+
+
+<h2>Http Headers</h2>
+<table border="1">
+<% for header in request.env.select {|k,v| k.match("^HTTP.*")} %>
+  <tr>
+    <td><%=header[0].split('_',2)[1]%></td><td><%=header[1]%></td>
+  </tr>
+<% end %>
+</table>
+
+
+<table border="1">
+<% for header in request.env %>
+  <tr>
+    <td><%=header[0].split('_',2)[1]%></td><td><%=header[1]%></td>
+  </tr>
+<% end %>
+</table>
+
+
+
+
+</body>
+</html>

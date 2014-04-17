@@ -1,0 +1,18 @@
+<% content_for :title, 'Setup peer evaluation for ' + @team.name %>
+<h1> Learning Objective Setup </h1>
+
+<%= form_for @objective, :url => {:action => "complete_setup"} do |f| %>
+
+    <input type="hidden" name="id" value="<%= params[:id] %>">
+
+    <% usercounter = 0 %>
+
+    <% @users.each do |user| %>
+        <%= user.human_name %><br />
+        <%= f.text_area :learning_objective, :index => usercounter, :size => "80x5", :value => @objectives[usercounter].learning_objective %><br />
+        <% usercounter += 1 %>
+        <br/>
+    <% end %>
+    <%= f.submit 'Create Learning Objectives' %>
+<% end %>
+<br/>

@@ -1,0 +1,95 @@
+<% reset_cycle %>
+
+
+<% if show_course_grade && @course.grading_rule.present? %>
+<script>
+    var grades = new Grade(<%= @course.grading_rule.get_grade_params_for_javascript.html_safe %>);
+    $(document).ready(function(){
+        $("tr[id^='s_']").each(function(){
+          var student_id = $(this).attr("id").replace("s_","");
+          grades.earned_grade(student_id);
+        });
+    });
+</script>
+<% end %>
+
+<% if user.nil? %>
+    <% user = current_user %>
+<% end %>
+<table class="twikiTable sortable cmu_table" cellpadding="0" cellspacing="0" width="685">
+  <thead>
+  <tr>
+    <% unless skip_course_column %>
+        <th>Course</th>
+    <% end %>
+    <th>Task</th>
+    <th>Name</th>
+    <th>Due Date <br/>(Pacific)</th>
+    <th>Feedback</th>
+    <th>Actions</th>
+    <th>Grade</th>
+  </tr>
+  </thead>
+
+  <% assignments.each do |assignment| %>
+    <tr class=<%= cycle('twikiTableEven', 'twikiTableOdd') %>>
+      <% unless skip_course_column %>
+        <% if assignment.course %>
+          <td><%= assignment.course.try(:short_name) || assignment.course.name[0..4] %></td>
+        <% else %>
+          <td>&nbsp;</td>
+        <% end %>
+      <% end %>
+      <td><%= assignment.task_number %></td>
+      <td><%= assignment.name_with_type %></td>
+      <% deliverable = assignment.get_student_deliverable(user.id) %>
+      <td>
+        <%=(assignment.due_date.blank?)?"":"#{assignment.due_date.to_date} at #{assignment.due_date.strftime("%I:%M%p")}"  %>
+      </td>
+      <td>
+        <% if deliverable && deliverable.grade_status == "graded" %>
+            <%= link_to 'Feedback', deliverable %>
+        <% end %>
+      </td>      
+        <% if deliverable.nil? && assignment.is_submittable %>
+            <%= link_to 'Submit', new_deliverable_path(:course_id => assignment.course.id, :assignment_id => assignment.id) %>
+        <% end %>
+        <% if deliverable && assignment.is_submittable %>
+            <%= link_to 'Resubmit', deliverable %>
+        <% end %>
+      <% grade = assignment.get_student_grade(user.id)  %>
+      <td>
+        <% if !grade.nil? && grade.is_student_visible %>
+        <%= "#{grade.score}/#{assignment.formatted_maximum_score}" %>
+        <% end %>
+      </td>
+    </tr>
+  <% end %>
+  <% if show_course_grade %>
+      <tr id="s_<%= user.id%>">
+       <td colspan=5 align="right">Earned Grade (Performance)</td>
+       <td class="earned"></td>
+     </tr>
+      <tr id="s_<%= user.id%>">
+       <td colspan=5 align="right">Earned Grade Letter</td>
+       <td class="performance"></td>
+     </tr>
+
+      <tr id="s_<%= user.id%>">
+      <td colspan=5 align="right">Final Letter Grade</td>
+      <td><%= Grade.get_final_grade(courses[0].id,user.id).presence %></td>
+    </tr>
+  <% end %>
+</table>
+
+
+<% if show_course_grade %>
+<table style="visibility: hidden">
+  <%= render :partial => "grade_spreadsheet", :locals => {:hide_draft_grades => true, :assignments => @assignments, :course => @course, :grades => @grades, :team_assignment => @team_assignment} %>
+</table>
+<% end %>
+
+<% if skip_course_column %>
+<br/>
+Note: In the middle of a course, earned grade will only calculate the grade based upon submitted deliverables to date.
+<% end %>

@@ -1,0 +1,4 @@
+$('#<%= dom_id(@assignment) %>').fadeOut(400, function(){
+    $('#<%= dom_id(@assignment) %>').remove();
+    calculate();
+});

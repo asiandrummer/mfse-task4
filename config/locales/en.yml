@@ -1,0 +1,26 @@
+# Sample localization file for English. Add more files in this directory for other locales.
+# See http://github.com/svenfuchs/rails-i18n/tree/master/rails%2Flocale for starting points.
+
+en:
+  time:
+    formats:
+     chatty: "%A, %B %d, %Y at %I:%M %p (%Z)"
+     detailed: "%B %d, %Y at %I:%M %p (%Z)"
+  date:
+    formats:
+      american: "%m/%d/%Y"
+      month_day: "%b %d"
+  no_permission: You don't have permission to access this page.
+  not_editable: You don't have permission to edit this object.
+  no_person: This person doesn't exist in the system.
+  no_grading_rule_for_course: Please configure your course. Gradebook won't work until you do so.
+  default_grading_rule_for_course: You still need to define the grading ranges for an A, A-, B+, etc. Please configure your course.
+  not_your_deliverable: You don't have permission to see another person's deliverables.
+  not_your_presentation: You don't have permission to see another person's presentation feedback.
+  peer_evaluation_message_two_done: According to my records, you have finished the peer evaluation. If you wanted to make any last minute changes to it, do it today.
+  peer_evaluation_message_two_incomplete: "Action Required: please do this peer evaluation survey NOW. \n\n Today is your last day to do the peer evaluation."
+  presentation_feedback_updated: Your feedback has been updated.
+  unauthorized:
+    manage:
+      all: "You don't have permission to %{action} %{subject}."
+      user: "Not allowed to manage other user accounts."

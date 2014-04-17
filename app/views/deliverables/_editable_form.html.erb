@@ -1,0 +1,71 @@
+<p>Submit individual deliverables and team deliverables separately. Any person on the team can submit your team
+  deliverables.</p>
+<p>Verify that your name (or team name) is in the filename and in the actual content.</p>
+<p>If your deliverable contains more than one file, then create a zip file.</p>
+<p>Please remember that incorporating the work and the ideas of others requires proper attribution and that failure to do so constitutes plagiarism.</p>
+
+<%= form_for @deliverable, :html => {:multipart => true} do |f| %>
+    <% if @deliverable.errors.any? %>
+        <div id="error_explanation">
+          <h2><%= pluralize(@deliverable.errors.count, "error") %> prohibited this deliverable from being saved:</h2>
+
+          <ul>
+            <% @deliverable.errors.full_messages.each do |msg| %>
+                <li><%= msg %></li>
+            <% end %>
+          </ul>
+        </div>
+    <% end %>
+
+  <% if @courses %>
+    <p>
+      <%= f.label :course_id, "Select Course" %>
+      <%= f.collection_select(:course_id, @courses, :id, :name, :include_blank => false, :onchange=>"set_assignments();") %>
+      <%= link_to image_tag("ajax-loader.gif", :class => "loading", :alt => "Loading" ,:hidden=>"true", :id=>"loading") %>
+    </p>
+    <p>
+      <%= f.label :assignment_id, "Deliverable" %>
+      <%= f.collection_select(:assignment_id, @assignments, :id, :name_with_type, :include_blank => false, :onchange=>"set_assignments();") %>
+
+    </p>
+    <div class="deliverable_attachment">
+      <%= fields_for :deliverable_attachment do |attachment_form| -%>
+          <p>
+            <%= attachment_form.label :attachment, "Deliverable file to upload" %>
+            <%= attachment_form.file_field :attachment %>
+          </p>
+
+          <p>
+            <%= attachment_form.label :comment, "Comments" %>
+            <br>
+            <%= attachment_form.text_area :comment, :size => "90x10" %>
+          </p>
+      <% end -%>
+    </div>
+    <p>
+      <%= f.submit button_name %>
+    </p>
+<% end %>
+<% end %>
+<script>
+  $("#deliverable_course_id").change(function(){
+      $("#loading").show();
+    $.ajax({
+        url: "/deliverables/get_assignments_for_student",
+        type: "get",
+        dataType: "json",
+        data: {course_id: $("#deliverable_course_id").val()},
+        success: function(result){
+            $("#deliverable_assignment_id").empty();
+            $.each(result,function(idx, value){
+                        $("#deliverable_assignment_id").append("<option value='"+value["assignment"]["id"]+"'>" + value["assignment"]["name_with_type"]+"</option>");
+                    }
+
+            );
+
+            $("#loading").hide();
+        }
+    });
+
+  }    );
+</script>

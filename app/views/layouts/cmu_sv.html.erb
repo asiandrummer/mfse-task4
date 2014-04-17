@@ -1,0 +1,199 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="Content-Type"/>
+  <meta content="Carnegie Mellon University" name="author">
+  <meta content="index,follow" name="robots">
+  <meta content="31 days" name="revisit-after">
+
+
+  <%= stylesheet_link_tag 'cmu_sv_layout_all' %>
+
+  <%= javascript_include_tag "application" %>
+
+  <%= csrf_meta_tag %>
+
+  <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.0/themes/base/jquery-ui.css" type="text/css" media="all"/>
+
+  <%= yield :tablesorter %>
+
+  <%= stylesheet_link_tag 'cmu_sv_layout_print', :media => "print" %>
+
+
+
+
+
+  <title><%= (title = yield :title) ? title : 'Silicon Valley Campus - Carnegie Mellon University' %></title>
+  <%= yield :javascript %>
+  <%= yield :head %>
+
+  <%#= stylesheet_link_tag "/stylesheets/bootstrap.min.css", :media => "screen", :rel => "stylesheet" %>
+
+
+</head>
+
+<body>
+<!--
+<h1 id="titleHead">
+  Software Systems and Management-Silicon Valley Campus - Carnegie Mellon University
+</h1>
+-->
+<%= yield :image_box %>
+<div id="wrapper">
+  <div id="pageHeader">
+    <div id="wordmark">
+      <h2><a href="http://www.cmu.edu/" title="Carnegie Mellon University"><span>Carnegie Mellon University</span></a>
+      </h2></div>
+    <div id="search">
+      <form action="<%= search_index_path %>" id="searchform" method="get" role="search">
+        <label for="searchSite" id="searchSiteLabel">Search whiteboard.sv.cmu.edu curriculum</label>
+        <input type="text" id="query" name="query" placeholder=" SEARCH">
+        <button id="searchSubmit" title="Submit Carnegie Mellon University keyword search" type="submit">Submit Carnegie
+          Mellon University Search
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="navWrapper">
+      <a class="noDisplay" href="http://www.cmu.edu/silicon-valley/software-systems-management/#access">Skip navigation
+        and jump directly to page content</a>
+
+      <div id="logo">
+        <a href="http://www.cmu.edu/silicon-valley/index.html"><%= image_tag("cmu_sv_standard_v4/sv_nocm.jpg", :alt => "Silicon Valley Campus Home Page", :border => "0", :src => "cmu_sv_standard_v4/sv_nocm.jpg", :title => "Silicon Valley Campus Home Page") %></a>
+
+        <div class="hr">
+          <hr>
+        </div>
+      </div>
+      <div id="nav">
+        <%= link_to image_tag("whiteboard.jpg", :alt => "Whiteboard logo", :border => 0, :width => "60%"), root_path %>
+        <ul>
+          <li class="standard"><a href="/people">People</a></li>
+          <li class="standard"><a href="/courses">Courses</a></li>
+          <ul>
+            <li class="standard">
+              <a href=<%= "/courses/semester/#{AcademicCalendar.current_semester()}#{AcademicCalendar.current_semester_year()}" %>><%= AcademicCalendar.current_semester() %> <%= AcademicCalendar.current_semester_year() %>
+                Courses</a></li>
+
+            <% if AcademicCalendar.next_semester_is_soon %>
+                <li class="standard">
+                  <a href=<%= "/courses/semester/#{AcademicCalendar.next_semester()}#{AcademicCalendar.next_semester_year}" %>><%= AcademicCalendar.next_semester() %> <%= AcademicCalendar.next_semester_year %>
+                    Courses</a></li>
+            <% end %>
+          </ul>
+          <li class="standard"><a href="/jobs">Jobs</a></li>
+          <li class="standard"><%= link_to "Presentations", today_presentations_url, :class => "Lv1NavLink" %></li>
+          <% if current_user %>
+              <li class="standard"><%= link_to "My Deliverables", my_deliverables_path(current_user.twiki_name), :class => "Lv1NavLink" %></li>
+              <li class="standard"><%= link_to "My Teams", my_teams_path(current_user.twiki_name), :class => "Lv1NavLink" %></li>
+              <li class="standard"><%= link_to "Logout " + current_user.first_name, destroy_user_session_path, :class => "Lv1NavLink" %></li>
+          <% else %>
+              <li class="standard"><font color="#626262">My Deliverables (Login required)</font></li>
+              <li class="standard"><font color="#626262">My Teams (Login required)</font></li>
+              <li class="standard"><%= link_to "Login ", user_omniauth_authorize_path(:google_apps), :class => "Lv1NavLink" %></li>
+              <!--              <li class="standard"><%= link_to "Forgot password", new_password_reset_path%></li> -->
+          <% end %>
+        </ul>
+        <div class="hr">
+          <hr>
+        </div>
+        <%= yield :left_nav %>
+        <% if @is_in_grade_book %>
+            <%=  render :partial=>"layouts/grade_book_menu" %>
+        <% end %>
+      </div>
+    </div>
+    <div id="topnav">
+      <ul>
+        <li class="first"><a href="http://www.cmu.edu/silicon-valley/about-us/index.html" title="About Us">About Us</a>
+        </li>
+        <li><a href="http://www.cmu.edu/silicon-valley/faculty-staff/directory.html" title="Directory">Directory</a>
+        </li>
+        <li><a href="http://www.cmu.edu/silicon-valley/about-us/directions.html" title="Visit Us">Visit Us</a></li>
+        <li><a href="http://www.cmu.edu/silicon-valley/about-us/contact-us.html" title="Contact Us">Contact Us</a></li>
+        <li><a href="http://www.cmu.edu/silicon-valley/about-us/giving.html" title="Giving">Giving</a></li>
+      </ul>
+      <div id="socialLinks">
+        <a href="http://www.facebook.com/carnegiemellonsiliconvalley" id="facebook" title="Connect with Silicon Valley Campus"></a>
+        <a href="http://twitter.com/cmusv" id="twitter" title="Connect with Silicon Valley Campus"></a>
+        <a href="http://www.linkedin.com/groups?gid=53820&sharedKey=680B335408C0" id="linkedin" title="Connect with Silicon Valley Campus"></a>
+        <a href="http://www.yammer.com/" id="yammer" title="Connect with Silicon Valley Campus"></a>
+        <a href="http://www.cmu.edu/silicon-valley/campus-life/social/index.html" id="more" title="See more of our social networks"></a>
+      </div>
+    </div>
+    <div id="contentWrapper">
+      <div id="headerImage"><%= image_tag("cmu_sv_standard_v4/pros_stds.jpg", :id => "pageHeaderPhoto") %></div>
+      <div id="breadcrumbs">
+        | <%= link_to "Whiteboard LMS", "/" %> |
+        <% if controller.controller_name != "welcome" %>
+            &gt; <%= controller.controller_name.humanize %>
+        <% else %>
+        <% end %>
+      </div>
+      <a name="access"></a>
+
+
+      <% if @no_pad %>
+          <%= render :partial => "layouts/no_pad" %>
+      <% else %>
+
+          <div class="content2Column" id="mainContent">
+            <div class="boxTop"></div>
+            <div class="content">
+              <% if flash[:notice] %>
+                  <div class="ui-widget">
+                    <div class="ui-state-highlight ui-corner-all">
+                      <p style="color: green; margin-top: 5px;">
+                        <span class="ui-icon ui-icon-info" style="float: left; margin-left: .2em; margin-top: .1em; margin-right: .3em"></span>
+                        <%= flash[:notice] %>
+                      </p>
+                    </div>
+                  </div>
+              <% end %>
+              <% if flash[:error] %>
+                  <div class="ui-widget">
+                    <div class="ui-state-error ui-corner-all" style="padding: 0 .7em;">
+                      <p style="color: red; margin-top: 5px;">
+                        <span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span>
+                        <%= flash[:error].html_safe%></p>
+                    </div>
+                  </div>
+              <% end %>
+
+              <%= yield %>
+
+              <br/>
+              <br/>
+              <p id="suggestion_link" style="padding:0">Do you have
+                a <%= link_to 'suggestion', :controller => 'suggestions', :action => 'new' %>
+                ?</p>
+
+            </div>
+            <div class="boxBottom"></div>
+
+      <% end %>
+      </div>
+
+    </div>
+    <div id="footer">
+      <ul class="contact">
+        <li class="first">Silicon Valley Campus</li>
+        <li>NASA Research Park, Bldg. 23 (MS 23-11), P.O. Box 1</li>
+        <li>Moffett Field, CA 94035-0001</li>
+        <li>(866) 401-9378</li>
+      </ul>
+      <ul class="links">
+        <li class="first"><a href="mailto:admissions@sv.cmu.edu">Email</a></li>
+        <li><a href="http://www.cmu.edu/" title="Carnegie Mellon University">Carnegie Mellon Home</a></li>
+      </ul>
+    </div>
+  </div>
+  <div id="pageFooter"></div>
+</div>
+
+
+<!--This website design is tied to the university content management systemprovided by Carnegie Mellon's Computing Services. If you're interested inusing this design, please visit http://www.cmu.edu/cms to learn more.-->
+</body>
+</html>

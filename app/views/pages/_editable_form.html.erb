@@ -1,0 +1,260 @@
+<%= stylesheet_link_tag "alertify.core.css", media: "all" %>
+<%= stylesheet_link_tag "alertify.default.css", media: "all" %>
+
+<%= javascript_include_tag "ajax-error.js" %>
+<%= javascript_include_tag "alertify_min.js" %>
+<%= javascript_include_tag "alertify_min.js" %>
+<%= javascript_include_tag 'jquery_cookie' %>
+
+
+
+<script type="text/javascript">
+
+    //var CKEDITOR_BASEPATH = 'http://d1z5n3u3tyi6h3.cloudfront.net/assets/ckeditor/';
+
+    var confirmation_needed = true;
+    var needs_to_be_saved = false;
+    var time_since_last_key_down = current_time();
+
+    window.onbeforeunload = confirmExit;
+
+    function enable_tabs(checkbox) {
+        if (checkbox.prop('checked')) {
+            $tabs = $('#tabs').tabs();
+            $tabs.tabs('option', 'disabled', []); //enables the tabs
+            $tabs.tabs('option', 'selected', parseInt($.cookie('selected_tab'), 10));
+            $('.ui-tabs-nav').css('display', 'block');
+            $('#email_header').css('display', 'block');
+            $('.page_or_task').html("task");
+        }
+        else {
+            $tabs = $('#tabs').tabs();
+            $tabs.tabs('option', 'selected', 0);
+            $tabs.tabs('option', 'disabled', [1, 2, 3]);
+            $('.ui-tabs-nav').css('display', 'none');
+            $('#email_header').css('display', 'none');
+            $('.page_or_task').html("page");
+        }
+    }
+
+    function change_detected() {
+        needs_to_be_saved = true;
+        time_since_last_key_down = current_time();
+    }
+
+    function enableAutoSave() {
+        var postPath = $('#edit-form').attr('action');
+
+        ['page_tab_one_contents', 'page_tab_two_contents', 'page_tab_three_contents', 'page_faculty_notes'].forEach(function (editor) {
+            CKEDITOR.instances[editor].on('key', function () {
+                change_detected();
+            });
+        })
+
+        setInterval(function () {
+            if (needs_to_be_saved) {
+                var instance;
+                for (instance in CKEDITOR.instances) {
+                    CKEDITOR.instances[instance].updateElement();
+                }
+
+                $.ajax({
+                    type: 'post',
+                    dataType: 'json',
+                    data: $('#edit-form').serialize(),
+                    timeout: 8000,
+                    url: postPath,
+                    success: function (data) {
+                        if (data.code == 'success') {
+                            // Update the form with the (possibly) new path
+                            postPath = data['new_post_path'];
+                            $('#edit-form').attr('action', postPath);
+                            hideAjaxError();
+                            needs_to_be_saved = false;
+                        } else {
+                            showAjaxError(data['message']);
+                        }
+                    },
+                    error: function (request, status, message) {
+                        // ignore timeout error
+                        if ("timeout" != status) {
+                            if(message) {
+                                showAjaxError(message);
+                            } else {
+                                showAjaxError("Unable to auto-save. Perhaps the server is down.");
+                            }
+                        }
+                    },
+                    complete: function (data) {
+                        needs_to_be_saved = false;
+                    }
+                });
+            }
+        }, 10000);
+    }
+
+    function current_time() {
+        return new Date().getTime();
+    }
+
+    function enableFiveMinuteTimeout() {
+        setInterval(function () {
+            // console.log("current_time  " + current_time() + "     time_since_last_key_down  " + time_since_last_key_down)
+            if((current_time() - time_since_last_key_down) >= (5 * 60 * 1000)) {
+                $("#timeout-flag").val("true");
+                // Disable popup warning user that they are leaving the page.
+                window.onbeforeunload = null;
+                $("#edit-form").submit();
+            }
+        }, 10000);
+    }
+
+    $(document).ready(function () {
+        var auto_save_enabled = <%= enable_auto_save ? "true" : "false" %>;
+        var timeout_enabled = <%= enable_timeout ? "true" : "false" %>;
+
+        $('#tabs').tabs();
+        $('.selector').tabs({ cookie:{ name:'selected_tab', expires:30 } });
+        $('#page_is_task').change(function () {
+            enable_tabs($(this));
+        })
+
+        enable_tabs($('#page_is_task'));
+
+        if (auto_save_enabled || timeout_enabled) {
+          $('.auto-save-on-change').change(function () {
+              change_detected();
+          });
+
+          $('.auto-save-on-keydown').keydown(function () {
+              change_detected();
+          });
+        }
+
+        if (auto_save_enabled) {
+            enableAutoSave();
+            alertify.log("Auto save is enabled. We'll save your changes every 10 seconds");
+        }
+
+        if (timeout_enabled) {
+            enableFiveMinuteTimeout();
+        }
+
+        //select tab according to index saved in cookie
+        $("#tabs").tabs().tabs('option', 'active', parseInt($.cookie('selected_tab'), 10));
+        $.cookie('selected_tab', null);   //clear cookie
+
+        // Disable file attachment on insert url link
+        CKEDITOR.on( 'dialogDefinition', function( ev ) {
+            var dialogName = ev.data.name;
+            var dialogDefinition = ev.data.definition;
+            if ( dialogName == 'image' || dialogName == 'link' ) {
+              dialogDefinition.removeContents('Upload');
+              dialogDefinition.removeContents('upload');
+            }
+        });
+
+
+    });
+</script>
+
+<%= form_for(@page, :html => {:id => "edit-form"}) do |f| %>
+    <% if @page.errors.any? %>
+        <div id="error_explanation">
+          <h2><%= pluralize(@page.errors.count, "error") %> prohibited this page from being saved:</h2>
+
+          <ul>
+            <% @page.errors.full_messages.each do |msg| %>
+                <li><%= msg %></li>
+            <% end %>
+          </ul>
+        </div>
+    <% end %>
+
+    <p>
+      <%# f.label :course_id %><br/>
+      <%# f.collection_select(:course_id, @courses, :id, :name, :include_blank => true) %>
+    </p>
+    <p>
+      <%= f.label :course_name %><br/>
+      <%= f.collection_select :course_name, @courses, :name, :name, {:include_blank => true}, {:class => 'auto-save-on-change'} %>
+      <%# select_tag 'course_name', options_from_collection_for_select(@courses, :name, :name), { :include_blank => true } %>
+    </p>
+    <p>
+      <%= f.label :title %><br/>
+      <%= f.text_field(:title, :class => 'auto-save-on-keydown') %>(*)
+    </p>
+    <p>
+      <%= f.label :url, "Named page" %><br/>
+      (Optional) http://whiteboard.sv.cmu.edu/pages/<%= f.text_field :url, :class =>'auto-save-on-keydown' %><br/>
+      <span class="help_text">This must be unique for all pages in the system.</span>
+    </p>
+    <!--
+  <p>
+    <%= f.label :indentation_level %><br />
+    <%= f.text_field :indentation_level %>
+  </p>
+-->
+    <p>
+      <%= f.label :is_task, 'Is this a task page for a course?' %>
+      <%= f.check_box(:is_task, :class => 'auto-save-on-change') %>
+    </p>
+
+    <div id="tabs">
+      <ul class="none">
+        <li><a href="#tabs-1">Project requirements</a></li>
+        <li><a href="#tabs-2">Getting help</a></li>
+        <li><a href="#tabs-3">Submitting your work</a></li>
+        <% if current_user.is_staff || current_user.is_admin %>
+            <li><a href="#tabs-4">Faculty notes</a></li>
+        <% end %>
+      </ul>
+      <div id="tabs-1">
+        <div id="email_header">
+          <div id="email_from_header">From:</div>
+          <div id="email_from_contents"><%= f.text_field :tab_one_email_from, :class =>'auto-save-on-keydown' %></div>
+          <div id="email_subject_header">Subject:</div>
+          <div id="email_subject_contents"><%= f.text_field :tab_one_email_subject, :class =>'auto-save-on-keydown' %></div>
+        </div>
+        <div id="email_details">
+          <%= f.text_area :tab_one_contents, :height => 600, :class => 'ckeditor' %>
+
+        </div>
+      </div>
+      <div id="tabs-2">
+        <%= f.text_area :tab_two_contents, :height => 600, :class => 'ckeditor'  %>
+
+      </div>
+      <div id="tabs-3">
+        <%= f.text_area :tab_three_contents, :height => 400, :class => 'ckeditor'  %>
+
+      </div>
+      <% if current_user.is_staff || current_user.is_admin %>
+          <div id="tabs-4">
+            <%= f.text_area :faculty_notes, :height => 400, :class => 'ckeditor'  %>
+
+          </div>
+      <% end %>
+    </div>
+
+
+
+    <p>
+      <%= f.label :task_duration %><br/>
+      <%= f.text_field :task_duration, :size => 2, :class => 'auto-save-on-keydown' %> weeks
+    </p>
+    <p>This <span class="page_or_task">page</span> is editable by<br/>
+      <%= f.radio_button :is_editable_by_all, "false", :class => 'auto-save-on-change' %> Faculty and staff<br/>
+      <%= f.radio_button :is_editable_by_all, "true", :class => 'auto-save-on-change' %> Any registered user<br/>
+    </p>
+    <p>This <span class="page_or_task">page</span> is viewable by<br/>
+      <%= f.radio_button :viewable_by, "staff", :class => 'auto-save-on-change' %> Faculty and staff<br/>
+      <%= f.radio_button :viewable_by, "users", :class => 'auto-save-on-change' %> Any registered user<br/>
+      <%= f.radio_button :viewable_by, "world", :class => 'auto-save-on-change' %> Everyone<br/>
+    </p>
+    <p>
+      <%= f.submit button_name, :onclick => "confirmation_needed = false;" %>
+    </p>
+    <input id="timeout-flag" type="hidden" name="timeout_flag" value="">
+<% end %>
+

@@ -1,0 +1,161 @@
+<h1><%= link_to @course.display_for_course_page, course_path(@course), :class => "course" %></h1>
+<%= render :partial=>"layouts/grade_book_sub_menu" %>
+
+<div class="tw-bs"> <!-- Twitter Bootstrap Start -->
+
+<script>
+
+    $(document).ajaxStart(function(){
+        $(this).find("#loading_ajax_request").hide();
+    });
+    $(document).ajaxStop(function(){
+        $(this).find("#loading_ajax_request").show();
+    });
+
+    $(document).on('click', '.ajax', function() {
+        var deliverable = $(this);
+        $.get('/deliverables/' + $(this).find('#deliverable_id').text(),
+                function(response){
+                    deliverable.siblings().html(response);
+                }
+        )
+        $(this).removeClass('ajax');
+    });
+
+    $(document).on('click', '.deliverable', function() {
+        $(this).siblings().slideToggle();
+
+        // Figure out the toggle state to show + or - sign
+        var toggle_state = $(this).parent().find('#toggle_img').attr('src');
+        toggle_state = toggle_state.indexOf("/assets/show")!= -1 ? "<%=image_path('hide_deliverable_detail.png') %>" : "<%= image_path('show_deliverable_detail.png') %>";
+        $(this).parent().find('#toggle_img').attr('src', toggle_state);
+    });
+
+    var sendQueryToServer_timer = null;
+
+    // Update drop down menu with the selected text, assign the deliverable assignment_id
+    $(document).ready(function() {
+        $(".dropdown-menu li a").click(function(){
+            var selText = $(this).text();
+            var length_limit = 40;
+            selText = (selText.length >= length_limit ? selText.substr(0, length_limit-3) + "..." : selText);
+            $(this).parents('.btn-group').find('.dropdown-toggle').html(selText+' <span class="caret"></span>');
+            $("#filter_options_assignment_id").val($(this).attr("id"));
+            $('#filter_options_new').submit();
+        });
+
+        $('#search_box').keyup(function(){
+            if(sendQueryToServer_timer) {
+                clearTimeout(sendQueryToServer_timer);
+                console.log("Clear timer");
+            }
+
+            sendQueryToServer_timer = setTimeout(search_deliverable, 500);
+            console.log("Set timer");
+        });
+    });
+
+    var filter_graded = function() {
+        $('#filter_options_graded').prop('checked', !$('#filter_options_graded').is(':checked')); // if checked, uncheck it and vice versa
+        
+    };
+    var filter_ungraded = function() {
+        $('#filter_options_ungraded').prop('checked', !$('#filter_options_ungraded').is(':checked')); // if checked, uncheck it and vice versa
+        
+    };
+    var filter_drafted = function() {
+        $('#filter_options_drafted').prop('checked', !$('#filter_options_drafted').is(':checked')); // if checked, uncheck it and vice versa
+        
+    };
+    var filter_by_my_teams = function() {
+        $('#filter_options_is_my_teams_yes').prop('checked', !$('#filter_options_is_my_teams_yes').is(':checked'));
+        
+    };
+
+    
+
+    $('#search_box').keyup(function(){
+        console.log('Search');
+        
+    });
+
+</script>
+
+<div id="container" class="container">
+
+  <div id="loading_ajax_request" style="display: none;">
+    <%= image_tag("ajax-loader2.gif", :class => "ajax-loader", :size => "32x32") %>
+  </div>
+
+  <!-- Filters -->
+  <%= form_for @filter_options, :as => :filter_options, :url => {:action => "get_deliverables", :id => params[:id]}, :remote => true do |f| %>
+
+      <!-- Search -->
+      <div class="row">
+        <%= f.text_field :search_box, { :id => "search_box", :class => "form-control", :placeholder => "Search for student, team, Andrew ID..." } %>
+      </div>
+      <!-- /Search -->
+
+      <div class="row" style="padding-top: 7px; padding-bottom: 7px;"></div>
+
+      <div class="row">
+
+        <div class="pull-left">
+
+          <div class="btn-group btn-group-sm" data-toggle="buttons" id="filter_buttons">
+            <label class="btn btn-default active" onclick="filter_ungraded();">
+              <%= f.check_box :ungraded, { checked: true } %> Ungraded
+            </label>
+            <label class="btn btn-default active" onclick="filter_drafted();">
+              <%= f.check_box :drafted, { checked: true } %> Drafted
+            </label>
+            <label class="btn btn-default" id="filter_options_graded_label" onclick="filter_graded();">
+              <%= f.check_box :graded %> Graded
+            </label>
+
+            <%= f.hidden_field :assignment_id, { value: '' } %>
+
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                All Deliverables
+                <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu" style="font-size:12px;">
+                <li><a id="-1" href="">All Deliverables</a></li>
+                <% @assignments.each do |assignment| %>
+                    <li>
+                      <a id="<%= assignment.id %>" href="#"><%= "Task #{assignment.task_number}: #{assignment.name}" %></a>
+                    </li>
+                <% end %>
+              </ul>
+            </div>
+          </div>
+
+        </div> <!-- /pull-left -->
+
+        <div class="pull-right">
+
+          <div class="btn-group btn-group-sm" data-toggle="buttons">
+            <label class="btn btn-default active" onclick="filter_by_my_teams();">
+              <%= f.radio_button :is_my_teams, "yes", { checked: true }  %> My teams
+            </label>
+            <label class="btn btn-default" onclick="filter_by_my_teams();">
+              <%= f.radio_button :is_my_teams, "no", { checked: false }  %> Everyone
+            </label>
+          </div>
+
+        </div> <!-- /pull-right -->
+
+      </div> <!-- /row -->
+  <% end %>
+  <!-- /Filters -->
+
+</div> <!-- /container -->
+
+<hr>
+
+<div id="deliverables">
+  <%= render :partial => "deliverable_listing_professor", :locals => {:deliverables => @deliverables, :skip_course_column => true} %>
+</div>
+
+</div> <!-- Twitter Bootstrap End -->
